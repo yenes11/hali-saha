@@ -43,7 +43,7 @@ export function TeamColumn({
         items={players.map((p) => p.id)}
         strategy={verticalListSortingStrategy}
       >
-        <div className="space-y-3">
+        <div className="space-y-3 min-h-[200px]">
           {players.length === 0 ? (
             <div className="text-center py-8 text-white/40">
               <p className="text-sm">Oyuncu yok</p>

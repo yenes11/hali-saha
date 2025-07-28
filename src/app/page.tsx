@@ -133,17 +133,7 @@ export default function Home() {
     }
   };
 
-  const updatePlayerTeam = async (
-    playerId: number,
-    newTeam: 'team_a' | 'team_b' | 'unassigned'
-  ) => {
-    // Geçerli team değerlerini kontrol et
-    const validTeams = ['team_a', 'team_b', 'unassigned'];
-    if (!validTeams.includes(newTeam)) {
-      console.error('Geçersiz team değeri:', newTeam);
-      return;
-    }
-
+  const updatePlayerTeam = async (playerId: number, newTeam: string) => {
     // Optimistic update
     setPlayers((prev) =>
       prev.map((p) => (p.id === playerId ? { ...p, team: newTeam } : p))
@@ -178,11 +168,13 @@ export default function Home() {
     if (!over) return;
 
     const playerId = parseInt(active.id as string);
-    const newTeam = over.id as 'team_a' | 'team_b' | 'unassigned';
+    let newTeam = over.id as string;
 
-    // Aynı takıma bırakılırsa işlem yapma
-    const currentPlayer = players.find((p) => p.id === playerId);
-    if (currentPlayer?.team === newTeam) return;
+    // Eğer başka bir kartın üzerine bırakıldıysa
+    if (!['team_a', 'team_b', 'unassigned'].includes(newTeam)) {
+      const targetPlayer = players.find((p) => p.id === parseInt(newTeam));
+      newTeam = targetPlayer?.team || 'unassigned';
+    }
 
     updatePlayerTeam(playerId, newTeam);
   };

@@ -12,6 +12,6 @@ export const supabase = createClient(supabaseUrl, supabaseKey);
 export interface Player {
   id: number;
   name: string;
-  team: 'team_a' | 'team_b' | 'unassigned';
+  team: string;
   created_at: string;
 }
