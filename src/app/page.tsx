@@ -1,27 +1,21 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
-import { supabase, Player } from '@/lib/supabase';
-import { Copy, Check } from 'lucide-react';
+import { TeamColumn } from '@/components/TeamColumn';
+import { Player, supabase } from '@/lib/supabase';
 import {
+  closestCenter,
   DndContext,
   DragEndEvent,
+  DragOverEvent,
   DragOverlay,
   DragStartEvent,
-  DragOverEvent,
   PointerSensor,
   TouchSensor,
   useSensor,
   useSensors,
-  closestCenter,
 } from '@dnd-kit/core';
-import {
-  SortableContext,
-  verticalListSortingStrategy,
-} from '@dnd-kit/sortable';
-import { PlayerCard } from '@/components/PlayerCard';
-import { TeamColumn } from '@/components/TeamColumn';
-import { KanbanBoard } from '@/components/ui/shadcn-io/kanban';
+import { Check, Copy } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 
 export default function Home() {
   const [players, setPlayers] = useState<Player[]>([]);
