@@ -2,14 +2,18 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { supabase, Player } from '@/lib/supabase';
+import { Copy, Check } from 'lucide-react';
 import {
   DndContext,
   DragEndEvent,
   DragOverlay,
   DragStartEvent,
+  DragOverEvent,
   PointerSensor,
+  TouchSensor,
   useSensor,
   useSensors,
+  closestCenter,
 } from '@dnd-kit/core';
 import {
   SortableContext,
@@ -17,6 +21,7 @@ import {
 } from '@dnd-kit/sortable';
 import { PlayerCard } from '@/components/PlayerCard';
 import { TeamColumn } from '@/components/TeamColumn';
+import { KanbanBoard } from '@/components/ui/shadcn-io/kanban';
 
 export default function Home() {
   const [players, setPlayers] = useState<Player[]>([]);
@@ -24,12 +29,21 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [activePlayer, setActivePlayer] = useState<Player | null>(null);
+  const [overId, setOverId] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  // Mobile-friendly sensors with touch support
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 8,
+        distance: 5,
+      },
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint: {
+        delay: 150,
+        tolerance: 5,
       },
     })
   );
@@ -159,11 +173,37 @@ export default function Home() {
       (p) => p.id === parseInt(event.active.id as string)
     );
     setActivePlayer(player || null);
+    // Prevent body scroll on mobile while dragging
+    document.body.style.overflow = 'hidden';
+  };
+
+  const handleDragOver = (event: DragOverEvent) => {
+    const { over } = event;
+    if (over) {
+      const overIdString = over.id as string;
+      // Only set overId if it's a valid team dropzone
+      if (['team_a', 'team_b', 'unassigned'].includes(overIdString)) {
+        setOverId(overIdString);
+      } else {
+        // If over a player card, get the team of that player
+        const targetPlayer = players.find(
+          (p) => p.id === parseInt(overIdString)
+        );
+        if (targetPlayer) {
+          setOverId(targetPlayer.team);
+        }
+      }
+    } else {
+      setOverId(null);
+    }
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     setActivePlayer(null);
+    setOverId(null);
+    // Restore body scroll
+    document.body.style.overflow = '';
 
     if (!over) return;
 
@@ -179,50 +219,103 @@ export default function Home() {
     updatePlayerTeam(playerId, newTeam);
   };
 
+  const handleDragCancel = () => {
+    setActivePlayer(null);
+    setOverId(null);
+    // Restore body scroll
+    document.body.style.overflow = '';
+  };
+
+  const copyToClipboard = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy text:', err);
+    }
+  };
+
   const unassignedPlayers = players.filter((p) => p.team === 'unassigned');
   const teamAPlayers = players.filter((p) => p.team === 'team_a');
   const teamBPlayers = players.filter((p) => p.team === 'team_b');
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-900 via-green-800 to-green-700 text-white">
+    <div className="min-h-screen text-white">
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold mb-2">⚽ Hali Saha Takımı</h1>
-          <p className="text-green-200">
+        <div className="text-center mb-12 pt-8">
+          <h1 className="text-3xl font-bold mb-4 tracking-tight text-white">
+            Halı Saha Takımı
+          </h1>
+          <p className="text-zinc-500 text-lg font-medium">
             Oyuncuları sürükleyerek takımlara atayın
           </p>
-          <div className="mt-4 bg-green-800/50 rounded-lg p-4">
-            <span className="text-lg font-semibold">
-              Toplam Oyuncu: {players.length}/16
+          <div className="mt-6 bg-zinc-900 border border-zinc-800 rounded-full px-6 py-2 inline-block">
+            <span className="text-sm font-semibold text-zinc-400">
+              Toplam Oyuncu:{' '}
+              <span className="text-zinc-200">{players.length}</span>/16
             </span>
+          </div>
+        </div>
+
+        <div className="flex flex-col items-center justify-center mb-12">
+          <div className="mb-1">Kürşat Nohut - 215TL</div>
+
+          <div className="bg-zinc-900 border border-zinc-800 rounded-lg px-4 py-3 flex items-center gap-3 max-w-md w-full group hover:border-zinc-700 transition-colors">
+            <span className="text-zinc-300 text-sm flex-1 select-text">
+              TR22 0010 3000 0000 0067 8335 83
+            </span>
+            <button
+              onClick={() =>
+                copyToClipboard('TR22 0010 3000 0000 0067 8335 83')
+              }
+              className="p-2 hover:bg-zinc-800 rounded transition-colors"
+              title="Kopyala"
+            >
+              {copied ? (
+                <Check className="w-4 h-4 text-green-400" />
+              ) : (
+                <Copy className="w-4 h-4 text-zinc-400 group-hover:text-zinc-300" />
+              )}
+            </button>
           </div>
         </div>
 
         {/* Error Message */}
         {error && (
-          <div className="bg-red-600 text-white p-4 rounded-lg mb-6 text-center">
+          <div className="bg-red-500/20 border border-red-500/50 text-red-200 p-4 rounded-lg mb-6 text-center">
             {error}
           </div>
         )}
-
         {/* Add Player Form */}
-        <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6 mb-8">
-          <h2 className="text-2xl font-semibold mb-4">Yeni Oyuncu Ekle</h2>
-          <form onSubmit={addPlayer} className="flex gap-4">
+        <div className="mb-12">
+          <h2 className="text-2xl font-bold mb-3 text-zinc-100 flex items-center gap-2">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              height="32px"
+              viewBox="0 -960 960 960"
+              width="32px"
+              fill="#e3e3e3"
+            >
+              <path d="m368-4-70-40 120-208-68-40-60 104-70-40 206-356q-38-39-57-89t-19-103q0-36 9-71.5t29-68.5l68 40q-14 23-20 47.5t-6 50.5q0 53 26 99.5t74 74.5l90 52q62 36 91 103.5T740-322q0 38-10 74t-28 68l-70-40q14-24 20-49t6-51q0-32-9-62t-29-56L368-4Zm272-596q-33 0-56.5-23.5T560-680q0-33 23.5-56.5T640-760q33 0 56.5 23.5T720-680q0 33-23.5 56.5T640-600ZM540-800q-26 0-43-18t-17-42q0-26 18-43t42-17q26 0 43 18t17 42q0 26-18 43t-42 17Z" />
+            </svg>
+            Yeni Oyuncu Ekle
+          </h2>
+          <form onSubmit={addPlayer} className="flex">
             <input
               ref={inputRef}
               type="text"
               value={newPlayerName}
               onChange={(e) => setNewPlayerName(e.target.value)}
-              className="flex-1 px-4 py-2 rounded-lg bg-white/20 border border-white/30 text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-green-400"
+              className="flex-1 px-6 py-4 rounded-l-2xl bg-zinc-900 border border-zinc-800 border-r-0 text-white placeholder-zinc-600 focus:outline-none focus:border-zinc-600 transition-colors text-lg"
               placeholder="Oyuncu adını girin"
               disabled={loading || players.length >= 16}
             />
             <button
               type="submit"
               disabled={loading || players.length >= 16}
-              className="bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-semibold py-2 px-6 rounded-lg transition-colors"
+              className="px-8 py-4 bg-zinc-100 text-black font-bold rounded-r-2xl hover:bg-white disabled:bg-zinc-800 disabled:text-zinc-600 disabled:cursor-not-allowed transition-colors border border-zinc-800"
             >
               {loading
                 ? 'Ekleniyor...'
@@ -236,8 +329,11 @@ export default function Home() {
         {/* Teams Layout */}
         <DndContext
           sensors={sensors}
+          collisionDetection={closestCenter}
           onDragStart={handleDragStart}
+          onDragOver={handleDragOver}
           onDragEnd={handleDragEnd}
+          onDragCancel={handleDragCancel}
         >
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Unassigned Players */}
@@ -246,7 +342,8 @@ export default function Home() {
               players={unassignedPlayers}
               teamId="unassigned"
               onDeletePlayer={deletePlayer}
-              className="bg-yellow-900/30"
+              className="bg-zinc-900/30 border border-zinc-800/50"
+              isOver={overId === 'unassigned'}
             />
 
             {/* Team A */}
@@ -255,7 +352,8 @@ export default function Home() {
               players={teamAPlayers}
               teamId="team_a"
               onDeletePlayer={deletePlayer}
-              className="bg-blue-900/30"
+              className="bg-zinc-900/30 border border-zinc-800/50"
+              isOver={overId === 'team_a'}
             />
 
             {/* Team B */}
@@ -264,13 +362,33 @@ export default function Home() {
               players={teamBPlayers}
               teamId="team_b"
               onDeletePlayer={deletePlayer}
-              className="bg-red-900/30"
+              className="bg-zinc-900/30 border border-zinc-800/50"
+              isOver={overId === 'team_b'}
             />
           </div>
 
-          <DragOverlay>
+          <DragOverlay
+            dropAnimation={{
+              duration: 300,
+              easing: 'cubic-bezier(0.18, 0.67, 0.6, 1)',
+            }}
+            style={{
+              cursor: 'grabbing',
+            }}
+            className="z-50 touch-none"
+          >
             {activePlayer ? (
-              <PlayerCard player={activePlayer} onDelete={() => {}} />
+              <div className="transform rotate-2 scale-110 shadow-2xl opacity-95 pointer-events-none">
+                <div className="bg-zinc-900 p-4 border-2 border-zinc-500 rounded-lg min-w-[200px]">
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-lg text-white">
+                        {activePlayer.name}
+                      </h3>
+                    </div>
+                  </div>
+                </div>
+              </div>
             ) : null}
           </DragOverlay>
         </DndContext>

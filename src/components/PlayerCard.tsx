@@ -8,9 +8,15 @@ interface PlayerCardProps {
   player: Player;
   onDelete: (id: number) => void;
   index?: number;
+  isDragging?: boolean;
 }
 
-export function PlayerCard({ player, onDelete, index }: PlayerCardProps) {
+export function PlayerCard({
+  player,
+  onDelete,
+  index,
+  isDragging: isDraggingProp,
+}: PlayerCardProps) {
   const {
     attributes,
     listeners,
@@ -22,8 +28,10 @@ export function PlayerCard({ player, onDelete, index }: PlayerCardProps) {
 
   const style = {
     transform: CSS.Transform.toString(transform),
-    transition,
+    transition: isDragging ? 'none' : transition,
   };
+
+  const isActuallyDragging = isDragging || isDraggingProp;
 
   return (
     <div
@@ -31,15 +39,17 @@ export function PlayerCard({ player, onDelete, index }: PlayerCardProps) {
       style={style}
       {...attributes}
       {...listeners}
-      className={`bg-white/20 backdrop-blur-sm rounded-lg p-4 border border-white/20 hover:bg-white/30 transition-colors cursor-grab active:cursor-grabbing ${
-        isDragging ? 'opacity-50' : ''
+      className={`group last:rounded-b-lg relative bg-zinc-900 p-4 border border-zinc-800 hover:border-zinc-700 transition-all duration-200 cursor-grab active:cursor-grabbing touch-none select-none ${
+        isActuallyDragging
+          ? 'opacity-30 scale-95 z-50'
+          : 'opacity-100 scale-100'
       }`}
     >
       <div className="flex justify-between items-start">
         <div className="flex-1">
-          <div className="flex items-center gap-2 mb-1">
+          <div className="flex items-center gap-3">
             {index && (
-              <span className="bg-white/20 text-white text-sm font-bold px-2 py-1 rounded-full min-w-[24px] text-center">
+              <span className="bg-zinc-950 text-zinc-500 text-xs font-bold px-2 py-1 min-w-[24px] text-center border border-zinc-800">
                 {index}
               </span>
             )}
@@ -51,7 +61,7 @@ export function PlayerCard({ player, onDelete, index }: PlayerCardProps) {
             e.stopPropagation();
             onDelete(player.id);
           }}
-          className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm transition-colors"
+          className="bg-rose-600 font-bold hover:bg-red-700 text-white px-6 py-1 border border-rose-500 rounded-full text-sm transition-colors"
         >
           Sil
         </button>
