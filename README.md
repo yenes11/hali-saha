@@ -5,7 +5,6 @@ Futbol takımlarını yönetmek için geliştirilmiş modern web uygulaması. Oy
 ## 🚀 Özellikler
 
 - ✅ **Sürükle-Bırak**: Oyuncuları takımlar arasında taşıyın
-- ✅ **16 Kişilik Limit**: Maksimum oyuncu sayısı kontrolü
 - ✅ **Optimistic Updates**: Anında görsel geri bildirim
 - ✅ **Responsive Tasarım**: Mobil ve desktop uyumlu
 - ✅ **Futbol Teması**: Yeşil gradient arka plan

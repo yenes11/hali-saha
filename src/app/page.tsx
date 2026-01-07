@@ -64,8 +64,8 @@ export default function Home() {
   const addPlayer = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (players.length >= 16) {
-      setError('Takım 16 kişi ile sınırlıdır!');
+    if (players.length >= 14) {
+      setError('Takım 14 kişi ile sınırlıdır!');
       return;
     }
 
@@ -248,31 +248,8 @@ export default function Home() {
           <div className="mt-6 bg-zinc-900 border border-zinc-800 rounded-full px-6 py-2 inline-block">
             <span className="text-sm font-semibold text-zinc-400">
               Toplam Oyuncu:{' '}
-              <span className="text-zinc-200">{players.length}</span>/16
+              <span className="text-zinc-200">{players.length}</span>/14
             </span>
-          </div>
-        </div>
-
-        <div className="flex flex-col items-center justify-center mb-12">
-          <div className="mb-1">Kürşat Nohut - 215TL</div>
-
-          <div className="bg-zinc-900 border border-zinc-800 rounded-lg px-4 py-3 flex items-center gap-3 max-w-md w-full group hover:border-zinc-700 transition-colors">
-            <span className="text-zinc-300 text-sm flex-1 select-text">
-              TR22 0010 3000 0000 0067 8335 83
-            </span>
-            <button
-              onClick={() =>
-                copyToClipboard('TR22 0010 3000 0000 0067 8335 83')
-              }
-              className="p-2 hover:bg-zinc-800 rounded transition-colors"
-              title="Kopyala"
-            >
-              {copied ? (
-                <Check className="w-4 h-4 text-green-400" />
-              ) : (
-                <Copy className="w-4 h-4 text-zinc-400 group-hover:text-zinc-300" />
-              )}
-            </button>
           </div>
         </div>
 
@@ -304,16 +281,16 @@ export default function Home() {
               onChange={(e) => setNewPlayerName(e.target.value)}
               className="flex-1 px-6 py-4 rounded-l-2xl bg-zinc-900 border border-zinc-800 border-r-0 text-white placeholder-zinc-600 focus:outline-none focus:border-zinc-600 transition-colors text-lg"
               placeholder="Oyuncu adını girin"
-              disabled={loading || players.length >= 16}
+              disabled={loading || players.length >= 14}
             />
             <button
               type="submit"
-              disabled={loading || players.length >= 16}
+              disabled={loading || players.length >= 14}
               className="px-8 py-4 bg-zinc-100 text-black font-bold rounded-r-2xl hover:bg-white disabled:bg-zinc-800 disabled:text-zinc-600 disabled:cursor-not-allowed transition-colors border border-zinc-800"
             >
               {loading
                 ? 'Ekleniyor...'
-                : players.length >= 16
+                : players.length >= 14
                 ? 'Takım Dolu'
                 : 'Ekle'}
             </button>
